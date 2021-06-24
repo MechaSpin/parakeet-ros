@@ -2,14 +2,15 @@
 	Copyright 2021 OpenJAUS, LLC (dba MechaSpin). Subject to the MIT license.
 */
 
+#include <algorithm>
 #include <parakeet/Driver.h>
+#include <parakeet/util.h>
 #include "ros/ros.h"
 
 #include "std_msgs/String.h"
 #include "sensor_msgs/LaserScan.h"
 
 #define NODE_NAME "parakeet_ros_talker"
-#define degreeToRadianCoeff M_PI / 180
 
 #define GET_PARAM(param, optional)                                                                  \
 if(!nodeHandle.getParam(#param, param) && !optional)           \
@@ -49,45 +50,33 @@ void onPointsReceived(const mechaspin::parakeet::ScanDataPolar& scanData)
 
     msg.header.frame_id = "laser";
 
-    float minAngle = 2*M_PI;
-    float maxAngle = -2*M_PI;
-    uint16_t minRange = 65535;
-    uint16_t maxRange = 0;
+    float minAngle_rad = 2*M_PI;
+    float maxAngle_rad = -2*M_PI;
+
+    uint16_t minRange_mm = 65535;
+    uint16_t maxRange_mm = 0;
 
     for(auto point : scanData.getPoints())
     {
-        float angle = point.getAngleInDegrees() * degreeToRadianCoeff;
-        if(angle > maxAngle)
-        {
-            maxAngle = angle;
-        }
+        float angle_rad = mechaspin::parakeet::util::degreesToRadians(point.getAngle_deg()); 
 
-        if(angle < minAngle)
-        {
-            minAngle = angle;
-        }
+        minAngle_rad = std::min(minAngle_rad, angle_rad);
+        maxAngle_rad = std::max(maxAngle_rad, angle_rad);
 
-        float range = point.getRange();
-        if(range > maxRange)
-        {
-            maxRange = range;
-        }
+        uint16_t range_mm = point.getRange_mm();
+        minRange_mm = std::min(minRange_mm, range_mm);
+        maxRange_mm = std::max(maxRange_mm, range_mm);
 
-        if(range < minRange)
-        {
-            minRange = range;
-        }
-
-        msg.ranges.push_back(range);
+        msg.ranges.push_back(range_mm);
         msg.intensities.push_back(point.getIntensity());
     }
 
-    msg.angle_min = minAngle;
-    msg.angle_max = maxAngle;
-    msg.range_min = minRange;
-    msg.range_max = maxRange;
+    msg.angle_min = minAngle_rad;
+    msg.angle_max = maxAngle_rad;
+    msg.range_min = minRange_mm;
+    msg.range_max = maxRange_mm;
 
-    msg.angle_increment = (maxAngle - minAngle) / scanData.getPoints().size();
+    msg.angle_increment = (maxAngle_rad - minAngle_rad) / scanData.getPoints().size();
 
     msg.scan_time = 0;
 

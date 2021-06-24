@@ -1,14 +1,11 @@
 cmake_minimum_required (VERSION 3.10)
-project(parakeet_ros VERSION 1.0.0)
+project(parakeet_ros VERSION 1.0.1)
 
 ## Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg sensor_msgs)
 
-## Generate added messages and services
-generate_messages(DEPENDENCIES std_msgs)
-
 ## Import Parakeet SDK
-find_package(Parakeet 1.0.0 REQUIRED)
+find_package(Parakeet REQUIRED)
 
 ## Declare a catkin package
 catkin_package()
