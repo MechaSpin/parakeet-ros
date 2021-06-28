@@ -85,3 +85,10 @@ The topic the laser scan should be published under
 ie: "myCustomTopic"
 
 default value: "scan"
+
+#### laserScanFrameID - OPTIONAL
+The frame ID the laser scan should be published under
+
+ie: "myCustomFrameID"
+
+default value: "laser"
