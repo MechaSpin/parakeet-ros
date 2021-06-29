@@ -89,7 +89,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, NODE_NAME);
     timeReceivedLastPoints = std::chrono::system_clock::now().time_since_epoch();
 
-    ros::NodeHandle nodeHandle("~");
+    ros::NodeHandle nodeHandle("");
 
     std::string laserScanTopic;
     GET_PARAM(laserScanTopic, true);
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
     laserScanFrameID = laserScanFrameID == "" ? "laser" : laserScanFrameID;
 
     rosNodePublisher = nodeHandle.advertise<sensor_msgs::LaserScan>(laserScanTopic == ""?"scan":laserScanTopic, 1000);
-    debugMessagePublisher = nodeHandle.advertise<std_msgs::String>("debug_msgs", 1000);
+    debugMessagePublisher = nodeHandle.advertise<std_msgs::String>("parakeet_ros_debug_messages", 1000);
 
     //Get params from paremeter server
     // ex: rosrun parakeet_ros parakeet_ros_talker _port:="/dev/ttyUSB0" _baudrate:=500000 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false

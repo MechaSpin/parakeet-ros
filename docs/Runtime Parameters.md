@@ -15,36 +15,19 @@ rosparam allows for parameters to be set before calling rosrun
 - For each parameter needing change, we will execute the following (subbing values in for PARAMETER and PARAMETER_VALUE)
 
 ```
-rosparam set parakeet_ros_talker/PARAMETER PARAMETER_VALUE
+rosparam set PARAMETER PARAMETER_VALUE
 ```
 
 - ie:
 
 ```
-rosparam set parakeet_ros_talker/port "/dev/ttyUSB0"
+rosparam set port "/dev/ttyUSB0"
 ```
 
 After setting the parameters, you can execute the ROS node via:
 
 
 	rosrun parakeet_ros parakeet_ros_talker
-
-
-
-#### 1c. Setting parameters during rosrun
-rosrun can also take parameters and will pass them all to rosparam
-- An execution of rosrun with setting parameters will look like:
-
-```
-rosrun parakeet_ros parakeet_ros_talker _PARAMETER1:=PARAMETER1_VALUE _PARAMETER2:=PARAMETER2_VALUE
-```
-
-- A full rosrun execution modifying each parameter will look like:
-
-```
-rosrun parakeet_ros parakeet_ros_talker _port:="/dev/ttyUSB0" _baudrate:=0 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false
-```
-
 
 #  All parameters
 #### port

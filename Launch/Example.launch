@@ -1,16 +1,16 @@
 <launch>
-	<node pkg="parakeet_ros" name="parakeet_ros_talker" type="parakeet_ros_talker">
-		<param name="port" value="/dev/ttyUSB0" />
-		<param name="baudrate" value="0" />
-		<param name="intensityData" value="true" />
-		<param name="scanningFrequency_Hz" value="10" />
-		<param name="dataSmoothing" value="false" />
-		<param name="dragPointRemoval" value="false" />
+	<param name="port" value="/dev/ttyUSB0" />
+	<param name="baudrate" value="0" />
+	<param name="intensityData" value="true" />
+	<param name="scanningFrequency_Hz" value="10" />
+	<param name="dataSmoothing" value="false" />
+	<param name="dragPointRemoval" value="false" />
 
-		<!-- Optional, default is "scan" -->
-		<param name="laserScanTopic" value="scan" />
+	<!-- Optional, default is "scan" -->
+	<param name="laserScanTopic" value="scan" />
 
-		<!-- Optional, default is "laser" -->
-		<param name="laserScanFrameID" value="laser" />
-	</node>
+	<!-- Optional, default is "laser" -->
+	<param name="laserScanFrameID" value="laser" />
+
+	<node pkg="parakeet_ros" type="parakeet_ros_talker" name="parakeet_ros_talker_name" />
 </launch>
