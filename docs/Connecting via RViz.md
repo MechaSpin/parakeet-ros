@@ -14,4 +14,3 @@ rviz
 - Open the LaserScan tree under the Displays section
 - Specify the topic the ROS Node is publishing on (defaults to "/parakeet_ros_talker/scan")
 - Note: This topic can be specified through the parameter server
-- Note: If messages are being recieved, but no data is visible, consider upping the LaserScan size, and zooming out
