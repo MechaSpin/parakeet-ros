@@ -22,3 +22,8 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${PARAKEET_TARGET_NAME})
 ## Build package
 add_executable(parakeet_ros_talker src/ROSNode.cpp)
 target_link_libraries(parakeet_ros_talker ${catkin_LIBRARIES} ${PARAKEET_TARGET_NAME})
+
+install( TARGETS
+    parakeet_ros_talker
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
