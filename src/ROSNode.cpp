@@ -61,7 +61,7 @@ void onPointsReceived(const mechaspin::parakeet::ScanDataPolar& scanData)
     int currentTimeSinceEpochNanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTimeSinceEpoch).count() - (currentTimeSinceEpochSeconds * NANOSECONDS_IN_SECOND);
     laserScanMessage.header.stamp = ros::Time(currentTimeSinceEpochSeconds, currentTimeSinceEpochNanoseconds);
 
-    laserScanMessage.header.frame_id = "laser";
+    laserScanMessage.header.frame_id = laserScanFrameID;
 
     float minAngle_rad = mechaspin::parakeet::util::degreesToRadians(scanData.getPoints()[0].getAngle_deg());
     float maxAngle_rad = mechaspin::parakeet::util::degreesToRadians(scanData.getPoints()[numberOfPointsReceived - 1].getAngle_deg());
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, NODE_NAME);
     timeReceivedLastPoints = std::chrono::system_clock::now().time_since_epoch();
 
-    ros::NodeHandle nodeHandle("~");
+    ros::NodeHandle nodeHandle("");
 
     std::string laserScanTopic;
     GET_PARAM(laserScanTopic, true);
