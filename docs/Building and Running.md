@@ -1,12 +1,15 @@
 # Parakeet ROS Node Building and Running using Terminal
-#### 1. Install the parakeet-sdk following the [Building and Installing](https://github.com/MechaSpin/parakeet-sdk/blob/main/docs/Building%20and%Installing.md) instructions
-#### 2. Clone parakeet-ros into your catkin workspace folder (~/catkin_ws), the cloned directory will be refered to as {PARAKEET_ROS_ROOT}
-
+#### 1. Install [ROS](http://wiki.ros.org/ROS/Installation)
+#### 2. Clone parakeet-ros into your catkin workspace source folder (~/catkin_ws/src), the cloned directory will be refered to as {PARAKEET_ROS_ROOT}
 ```
 git clone https://github.com/MechaSpin/parakeet-ros
 ```
 
-#### 3. Install [ROS](http://wiki.ros.org/ROS/Installation)
+#### 3. Clone parakeet-sdk into the parakeet-ros folder
+```
+cd {PARAKEET_ROS_ROOT}
+git clone https://github.com/MechaSpin/parakeet-sdk
+```
 #### 4. Building via Terminal
 - Navigate to your catkin workspace folder 
 
