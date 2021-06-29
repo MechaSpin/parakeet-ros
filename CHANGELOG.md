@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - In-Development
 ### Added
 - Allow modification of laser scan frame id
+- Now installable via catkin_make install
 ### Modified
 - Changed the ROS LaserScan message fields to contain the proper information
 - Changed how the Parakeet-SDK project should be installed for the ROS node to be aware of it
