@@ -13,7 +13,7 @@
 #define NODE_NAME "parakeet_ros_talker"
 
 #define GET_PARAM(param, optional)                                                                  \
-if(!nodeHandle.getParam(#param, param) && !optional)           \
+if(!nodeHandle.getParam(#param, param) && !optional)                                                \
 {                                                                                                   \
     std::cout << "Unable to read param /" << #param << std::endl;                                   \
     return -2;                                                                                      \
@@ -27,66 +27,67 @@ if(!nodeHandle.getParam(#param, param) && !optional)           \
     debugMessagePublisher.publish(debugMsg);                                                        \
 }
 
+const uint32_t PARAKEET_SENSOR_MIN_RANGE_MM = 0;
+const uint32_t PARAKEET_SENSOR_MAX_RANGE_MM = 50000;
+const double NANOSECONDS_IN_SECOND = 1000000000;
+
 ros::Publisher rosNodePublisher;
 ros::Publisher debugMessagePublisher;
 uint32_t sequenceID = 0;
 std::string laserScanFrameID;
+std::chrono::system_clock::duration timeReceivedLastPoints;
 
 void onPointsReceived(const mechaspin::parakeet::ScanDataPolar& scanData)
 {
-    if(scanData.getPoints().size() < 1)
+    int numberOfPointsReceived = scanData.getPoints().size();
+
+    if(numberOfPointsReceived < 1)
     {
         return;
     }
 
-    SEND_DEBUG_MESSAGE("Publishing LaserScan with " + std::to_string(scanData.getPoints().size()) + " points");
+    SEND_DEBUG_MESSAGE("Publishing LaserScan with " + std::to_string(numberOfPointsReceived) + " points");
 
-    sensor_msgs::LaserScan msg;
-    msg.header.seq = sequenceID++;
+    sensor_msgs::LaserScan laserScanMessage;
+    laserScanMessage.header.frame_id = laserScanFrameID;
+    laserScanMessage.header.seq = sequenceID++;
 
-    auto timeSinceEpoch = scanData.getTimestamp().time_since_epoch();
-    int sec = std::chrono::duration_cast<std::chrono::seconds>(timeSinceEpoch).count();
-    int nanoSec = std::chrono::duration_cast<std::chrono::nanoseconds>(timeSinceEpoch).count();
-    msg.header.stamp = ros::Time(sec, nanoSec);
+    auto currentTimeSinceEpoch = scanData.getTimestamp().time_since_epoch();
 
-    msg.header.frame_id = laserScanFrameID;
+    laserScanMessage.scan_time = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(currentTimeSinceEpoch - timeReceivedLastPoints).count() / NANOSECONDS_IN_SECOND;
+    laserScanMessage.time_increment = laserScanMessage.scan_time / numberOfPointsReceived;
 
-    float minAngle_rad = 2*M_PI;
-    float maxAngle_rad = -2*M_PI;
+    int currentTimeSinceEpochSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTimeSinceEpoch).count();
+    int currentTimeSinceEpochNanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTimeSinceEpoch).count() - (currentTimeSinceEpochSeconds * NANOSECONDS_IN_SECOND);
+    laserScanMessage.header.stamp = ros::Time(currentTimeSinceEpochSeconds, currentTimeSinceEpochNanoseconds);
 
-    uint16_t minRange_mm = 65535;
-    uint16_t maxRange_mm = 0;
+    laserScanMessage.header.frame_id = "laser";
+
+    float minAngle_rad = mechaspin::parakeet::util::degreesToRadians(scanData.getPoints()[0].getAngle_deg());
+    float maxAngle_rad = mechaspin::parakeet::util::degreesToRadians(scanData.getPoints()[numberOfPointsReceived - 1].getAngle_deg());
+
+    laserScanMessage.angle_min = minAngle_rad;
+    laserScanMessage.angle_max = maxAngle_rad;
+    laserScanMessage.range_min = PARAKEET_SENSOR_MIN_RANGE_MM;
+    laserScanMessage.range_max = PARAKEET_SENSOR_MAX_RANGE_MM;
 
     for(auto point : scanData.getPoints())
     {
-        float angle_rad = mechaspin::parakeet::util::degreesToRadians(point.getAngle_deg()); 
-
-        minAngle_rad = std::min(minAngle_rad, angle_rad);
-        maxAngle_rad = std::max(maxAngle_rad, angle_rad);
-
-        uint16_t range_mm = point.getRange_mm();
-        minRange_mm = std::min(minRange_mm, range_mm);
-        maxRange_mm = std::max(maxRange_mm, range_mm);
-
-        msg.ranges.push_back(range_mm);
-        msg.intensities.push_back(point.getIntensity());
+        laserScanMessage.ranges.push_back(point.getRange_mm() / 1000);
+        laserScanMessage.intensities.push_back(point.getIntensity());
     }
 
-    msg.angle_min = minAngle_rad;
-    msg.angle_max = maxAngle_rad;
-    msg.range_min = minRange_mm;
-    msg.range_max = maxRange_mm;
+    laserScanMessage.angle_increment = -(maxAngle_rad - minAngle_rad) / numberOfPointsReceived;
 
-    msg.angle_increment = (maxAngle_rad - minAngle_rad) / scanData.getPoints().size();
+    rosNodePublisher.publish(laserScanMessage);
 
-    msg.scan_time = 0;
-
-    rosNodePublisher.publish(msg);
+    timeReceivedLastPoints = currentTimeSinceEpoch;
 }
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, NODE_NAME);
+    timeReceivedLastPoints = std::chrono::system_clock::now().time_since_epoch();
 
     ros::NodeHandle nodeHandle("~");
 

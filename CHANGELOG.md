@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.2] - In-Development
 ### Added
 - Allow modification of laser scan frame id
+### Modified
+- Changed the ROS LaserScan message fields to contain the proper information
 
 ## [1.0.1] - 2021-06-21
 ### Changed
