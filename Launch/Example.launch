@@ -9,5 +9,8 @@
 
 		<!-- Optional, default is "scan" -->
 		<param name="laserScanTopic" value="scan" />
+
+		<!-- Optional, default is "laser" -->
+		<param name="laserScanFrameID" value="laser" />
 	</node>
 </launch>

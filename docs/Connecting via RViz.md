@@ -8,7 +8,7 @@ rviz
 ```
 
 #### 3. Connecting to parakeet_ros node
-- Inside rviz, under Displays -> Global Options, set Fixed Frame to "laser"
+- Inside rviz, under Displays -> Global Options, set Fixed Frame to the value of the parameter: laserScanFrameID, defaults to: laser
 - Near the bottom left of rviz, click Add
 - Select LaserScan and click OK
 - Open the LaserScan tree under the Displays section

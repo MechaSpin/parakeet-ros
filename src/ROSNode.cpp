@@ -30,6 +30,7 @@ if(!nodeHandle.getParam(#param, param) && !optional)           \
 ros::Publisher rosNodePublisher;
 ros::Publisher debugMessagePublisher;
 uint32_t sequenceID = 0;
+std::string laserScanFrameID;
 
 void onPointsReceived(const mechaspin::parakeet::ScanDataPolar& scanData)
 {
@@ -48,7 +49,7 @@ void onPointsReceived(const mechaspin::parakeet::ScanDataPolar& scanData)
     int nanoSec = std::chrono::duration_cast<std::chrono::nanoseconds>(timeSinceEpoch).count();
     msg.header.stamp = ros::Time(sec, nanoSec);
 
-    msg.header.frame_id = "laser";
+    msg.header.frame_id = laserScanFrameID;
 
     float minAngle_rad = 2*M_PI;
     float maxAngle_rad = -2*M_PI;
@@ -91,6 +92,8 @@ int main(int argc, char **argv)
 
     std::string laserScanTopic;
     GET_PARAM(laserScanTopic, true);
+    GET_PARAM(laserScanFrameID, true);
+    laserScanFrameID = laserScanFrameID == "" ? "laser" : laserScanFrameID;
 
     rosNodePublisher = nodeHandle.advertise<sensor_msgs::LaserScan>(laserScanTopic == ""?"scan":laserScanTopic, 1000);
     debugMessagePublisher = nodeHandle.advertise<std_msgs::String>("debug_msgs", 1000);
