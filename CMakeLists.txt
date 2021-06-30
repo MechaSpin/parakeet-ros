@@ -6,6 +6,8 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg sensor_msgs
 
 ## Import Parakeet SDK
 if(FIND_PKG_PARAKEET_SDK)
+	set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+	set(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 	find_package(Parakeet REQUIRED)
 	set(PARAKEET_TARGET_NAME Parakeet::Parakeet)
 else()
