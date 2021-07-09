@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.5)
 project(parakeet_ros VERSION 2.0.0)
 
 ## Find catkin and any catkin packages
