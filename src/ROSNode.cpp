@@ -19,8 +19,8 @@ namespace mechaspin
 {
 namespace parakeet
 {
-    const uint32_t PARAKEET_SENSOR_MIN_RANGE_MM = 0;
-    const uint32_t PARAKEET_SENSOR_MAX_RANGE_MM = 50000;
+    const uint32_t PARAKEET_SENSOR_MIN_RANGE_M = 0;
+    const uint32_t PARAKEET_SENSOR_MAX_RANGE_M = 50;
     const double NANOSECONDS_IN_SECOND = 1000000000;
 
     ROSNode::ROSNode() : nodeHandle("")
@@ -100,8 +100,8 @@ namespace parakeet
 
         laserScanMessage.angle_min = minAngle_rad;
         laserScanMessage.angle_max = maxAngle_rad;
-        laserScanMessage.range_min = PARAKEET_SENSOR_MIN_RANGE_MM;
-        laserScanMessage.range_max = PARAKEET_SENSOR_MAX_RANGE_MM;
+        laserScanMessage.range_min = PARAKEET_SENSOR_MIN_RANGE_M;
+        laserScanMessage.range_max = PARAKEET_SENSOR_MAX_RANGE_M;
 
         for(auto point : scanData.getPoints())
         {
