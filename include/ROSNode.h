@@ -2,7 +2,8 @@
 	Copyright 2021 OpenJAUS, LLC (dba MechaSpin). Subject to the MIT license.
 */
 
-#pragma once
+#ifndef PARAKEET_ROS_ROSNODE_H
+#define PARAKEET_ROS_ROSNODE_H
 
 #include <parakeet/Driver.h>
 #include <parakeet/util.h>
@@ -35,3 +36,5 @@ private:
 };
 }
 }
+
+#endif
