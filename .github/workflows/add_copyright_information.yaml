@@ -1,30 +1,30 @@
-name: Add Copyright Information Action
+name: Run Copyright Information Action
+
 on: [push]
+
+env:
+  DEVTOOLS_REPO: MechaSpin/parakeet-devtools
+  DEVTOOLS_REPO_BRANCH: main
+  PERSONAL_ACCESS_TOKEN: ${{ secrets.DEVTOOLS_ACCESS_TOKEN }}
+
 jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
-        uses: actions/checkout@v2
-        with:
-         path: parakeet
-      - name: Clone python script repo
-        uses: actions/checkout@v2
-        with:
-         repository: 'MechaSpin/parakeet-devtools'
-         path: 'parakeet-devtools'
-         token: ${{ secrets.DEVTOOLS_ACCESS_TOKEN }}
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: execute copyright python script
-        run: |
-          python ./parakeet-devtools/parakeet_copyright.py
-      - name: Push changes to git
-        run: |
-          cd parakeet/
-          git config --global user.name 'CopyrightGitHubAction'
-          git config --global user.email 'build@mechaspin.com'
-          git commit -am "Add Copyright Information" || exit 0
-          git push
+          python-version: '3.x'
+      - name: Clone active repository/branch
+        uses: actions/checkout@v2
+        with:
+         path: parakeet
+      - name: Clone devtools repository
+        uses: actions/checkout@v2
+        with:
+         repository: ${{ env.DEVTOOLS_REPO }}
+         ref: ${{ env.DEVTOOLS_REPO_BRANCH }}
+         path: 'parakeet-devtools'
+         token: ${{ env.PERSONAL_ACCESS_TOKEN }}
+      - name: Run Copyright Action
+        uses: ./parakeet-devtools/actions/copyright_action/

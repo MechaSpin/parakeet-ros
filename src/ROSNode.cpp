@@ -2,168 +2,168 @@
 	Copyright 2021 OpenJAUS, LLC (dba MechaSpin). Subject to the MIT license.
 */
 
-#include <parakeet/Driver.h>
-#include "ros/ros.h"
+#include "ROSNode.h"
+
+#include <algorithm>
 
 #include "std_msgs/String.h"
 #include "sensor_msgs/LaserScan.h"
 
-#define NODE_NAME "parakeet_ros_talker"
-#define degreeToRadianCoeff M_PI / 180
-
-#define GET_PARAM(param, optional)                                                                  \
-if(!nodeHandle.getParam(#param, param) && !optional)           \
-{                                                                                                   \
-    std::cout << "Unable to read param /" << #param << std::endl;                                   \
-    return -2;                                                                                      \
+#define Get_Parameter_From_Parameter_Server(parameterName, outputValue, isOptional)                                 \
+if(!nodeHandle.getParam(parameterName, outputValue) && !isOptional)                                                 \
+{                                                                                                                   \
+    throw std::runtime_error(std::string("Unable to read parameter: ") + parameterName + " from the parameter server.");  \
 }
 
-#define SEND_DEBUG_MESSAGE(message)                                                                 \
-{                                                                                                   \
-    std_msgs::String debugMsg;                                                                      \
-    debugMsg.data = message;                                                                        \
-                                                                                                    \
-    debugMessagePublisher.publish(debugMsg);                                                        \
-}
-
-ros::Publisher rosNodePublisher;
-ros::Publisher debugMessagePublisher;
-uint32_t sequenceID = 0;
-
-void onPointsReceived(const mechaspin::parakeet::ScanDataPolar& scanData)
+namespace mechaspin
 {
-    if(scanData.getPoints().size() < 1)
-    {
-        return;
-    }
-
-    SEND_DEBUG_MESSAGE("Publishing LaserScan with " + std::to_string(scanData.getPoints().size()) + " points");
-
-    sensor_msgs::LaserScan msg;
-    msg.header.seq = sequenceID++;
-
-    auto timeSinceEpoch = scanData.getTimestamp().time_since_epoch();
-    int sec = std::chrono::duration_cast<std::chrono::seconds>(timeSinceEpoch).count();
-    int nanoSec = std::chrono::duration_cast<std::chrono::nanoseconds>(timeSinceEpoch).count();
-    msg.header.stamp = ros::Time(sec, nanoSec);
-
-    msg.header.frame_id = "laser";
-
-    float minAngle = 2*M_PI;
-    float maxAngle = -2*M_PI;
-    uint16_t minRange = 65535;
-    uint16_t maxRange = 0;
-
-    for(auto point : scanData.getPoints())
-    {
-        float angle = point.getAngleInDegrees() * degreeToRadianCoeff;
-        if(angle > maxAngle)
-        {
-            maxAngle = angle;
-        }
-
-        if(angle < minAngle)
-        {
-            minAngle = angle;
-        }
-
-        float range = point.getRange();
-        if(range > maxRange)
-        {
-            maxRange = range;
-        }
-
-        if(range < minRange)
-        {
-            minRange = range;
-        }
-
-        msg.ranges.push_back(range);
-        msg.intensities.push_back(point.getIntensity());
-    }
-
-    msg.angle_min = minAngle;
-    msg.angle_max = maxAngle;
-    msg.range_min = minRange;
-    msg.range_max = maxRange;
-
-    msg.angle_increment = (maxAngle - minAngle) / scanData.getPoints().size();
-
-    msg.scan_time = 0;
-
-    rosNodePublisher.publish(msg);
-}
-
-int main(int argc, char **argv)
+namespace parakeet
 {
-    ros::init(argc, argv, NODE_NAME);
+    const uint32_t PARAKEET_SENSOR_MIN_RANGE_M = 0;
+    const uint32_t PARAKEET_SENSOR_MAX_RANGE_M = 50;
+    const double NANOSECONDS_IN_SECOND = 1000000000;
 
-    ros::NodeHandle nodeHandle("~");
-
-    std::string laserScanTopic;
-    GET_PARAM(laserScanTopic, true);
-
-    rosNodePublisher = nodeHandle.advertise<sensor_msgs::LaserScan>(laserScanTopic == ""?"scan":laserScanTopic, 1000);
-    debugMessagePublisher = nodeHandle.advertise<std_msgs::String>("debug_msgs", 1000);
-
-    //Get params from paremeter server
-    // ex: rosrun parakeet_ros parakeet_ros_talker _port:="/dev/ttyUSB0" _baudrate:=500000 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false
-    std::string port;
-    int baudrate;
-    bool intensityData;
-    int scanningFrequency_Hz;
-    bool dataSmoothing;
-    bool dragPointRemoval;
-
-    GET_PARAM(port, false);
-    GET_PARAM(baudrate, false);
-    GET_PARAM(intensityData, false);
-    GET_PARAM(scanningFrequency_Hz, false);
-    GET_PARAM(dataSmoothing, false);
-    GET_PARAM(dragPointRemoval, false);
-
-    std::vector<mechaspin::parakeet::Driver::ScanningFrequency> allFrequencies =
+    ROSNode::ROSNode() : nodeHandle("")
     {
-        mechaspin::parakeet::Driver::ScanningFrequency::Frequency_7Hz,
-        mechaspin::parakeet::Driver::ScanningFrequency::Frequency_10Hz,
-        mechaspin::parakeet::Driver::ScanningFrequency::Frequency_15Hz
-    };
+        debugMessagePublisher = nodeHandle.advertise<std_msgs::String>("parakeet_ros_debug_messages", 1000);
 
-    bool validFrequency = false;
-    for(auto frequency : allFrequencies)
+        std::string laserScanTopic;
+        Get_Parameter_From_Parameter_Server("laserScanTopic", laserScanTopic, true);
+        Get_Parameter_From_Parameter_Server("laserScanFrameID", laserScanFrameID, true);
+        laserScanFrameID = laserScanFrameID == "" ? "laser" : laserScanFrameID;
+
+        rosNodePublisher = nodeHandle.advertise<sensor_msgs::LaserScan>(laserScanTopic == ""?"scan":laserScanTopic, 1000);
+
+        timeReceivedLastPoints = std::chrono::system_clock::now().time_since_epoch();
+        sequenceID = 0;
+
+        sendROSDebugMessage("ROSNode initialized");
+    }
+
+    void ROSNode::run()
     {
-        if (static_cast<int>(frequency) == scanningFrequency_Hz)
+        Driver::SensorConfiguration sensorConfiguration = readSensorConfigurationFromParameterServer();
+
+        Driver driver;
+
+        driver.connect(sensorConfiguration);
+
+        driver.registerScanCallback(std::bind(&ROSNode::onPointsReceived, this, std::placeholders::_1));
+
+        sendROSDebugMessage("Starting driver.");
+        driver.start();
+
+        ros::Rate loop_rate(10);
+        ros::spin();
+
+        sendROSDebugMessage("Shutting driver down.");
+
+        driver.stop();
+    }
+
+    void ROSNode::sendROSDebugMessage(const std::string& debugMessage)
+    {
+        std_msgs::String debugMsg;
+        debugMsg.data = debugMessage;
+
+        debugMessagePublisher.publish(debugMsg);
+    }
+
+    void ROSNode::onPointsReceived(const ScanDataPolar& scanData)
+    {
+        int numberOfPointsReceived = scanData.getPoints().size();
+
+        if(numberOfPointsReceived < 1)
         {
-            validFrequency = true;
-            break;
+            return;
         }
+
+        sendROSDebugMessage("Publishing LaserScan with " + std::to_string(numberOfPointsReceived) + " points");
+
+        sensor_msgs::LaserScan laserScanMessage;
+        laserScanMessage.header.frame_id = laserScanFrameID;
+        laserScanMessage.header.seq = sequenceID++;
+
+        auto currentTimeSinceEpoch = scanData.getTimestamp().time_since_epoch();
+
+        laserScanMessage.scan_time = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(currentTimeSinceEpoch - timeReceivedLastPoints).count() / NANOSECONDS_IN_SECOND;
+        laserScanMessage.time_increment = laserScanMessage.scan_time / numberOfPointsReceived;
+
+        int currentTimeSinceEpochSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTimeSinceEpoch).count();
+        int currentTimeSinceEpochNanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTimeSinceEpoch).count() - (currentTimeSinceEpochSeconds * NANOSECONDS_IN_SECOND);
+        laserScanMessage.header.stamp = ros::Time(currentTimeSinceEpochSeconds, currentTimeSinceEpochNanoseconds);
+
+        laserScanMessage.header.frame_id = laserScanFrameID;
+
+        float minAngle_rad = util::degreesToRadians(scanData.getPoints()[0].getAngle_deg());
+        float maxAngle_rad = util::degreesToRadians(scanData.getPoints()[numberOfPointsReceived - 1].getAngle_deg());
+
+        laserScanMessage.angle_min = minAngle_rad;
+        laserScanMessage.angle_max = maxAngle_rad;
+        laserScanMessage.range_min = PARAKEET_SENSOR_MIN_RANGE_M;
+        laserScanMessage.range_max = PARAKEET_SENSOR_MAX_RANGE_M;
+
+        for(auto point : scanData.getPoints())
+        {
+            laserScanMessage.ranges.push_back(point.getRange_mm() / 1000);
+            laserScanMessage.intensities.push_back(point.getIntensity());
+        }
+
+        laserScanMessage.angle_increment = -(maxAngle_rad - minAngle_rad) / numberOfPointsReceived;
+
+        rosNodePublisher.publish(laserScanMessage);
+
+        timeReceivedLastPoints = currentTimeSinceEpoch;
     }
 
-    if(!validFrequency)
+    bool ROSNode::isValidScanningFrequency_HzValue(int scanningFrequency_Hz)
     {
-        throw std::runtime_error("Invalid Scanning Frequency specified.");
+        std::vector<Driver::ScanningFrequency> allFrequencies =
+        {
+            Driver::ScanningFrequency::Frequency_7Hz,
+            Driver::ScanningFrequency::Frequency_10Hz,
+            Driver::ScanningFrequency::Frequency_15Hz
+        };
+
+        for(auto frequency : allFrequencies)
+        {
+            if (static_cast<int>(frequency) == scanningFrequency_Hz)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
-    mechaspin::parakeet::Driver::ScanningFrequency enumScanningFrequency_Hz = static_cast<mechaspin::parakeet::Driver::ScanningFrequency>(scanningFrequency_Hz);
-
-    ros::Rate loop_rate(10);
-
-    mechaspin::parakeet::Driver driver;
-
-    if(!driver.connect(port, mechaspin::parakeet::BaudRate(baudrate), intensityData, enumScanningFrequency_Hz, dataSmoothing, dragPointRemoval))
+    Driver::SensorConfiguration ROSNode::readSensorConfigurationFromParameterServer()
     {
-        SEND_DEBUG_MESSAGE("Failure to connect to: " + port + ".");
+        //Get params from paremeter server
+        // ex: rosrun parakeet_ros parakeet_ros_talker _port:="/dev/ttyUSB0" _baudrate:=500000 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false
 
-        return -1;
+        Driver::SensorConfiguration sensorConfiguration;
+
+        Get_Parameter_From_Parameter_Server("port", sensorConfiguration.comPort, false);
+
+        int baudRate;
+        Get_Parameter_From_Parameter_Server("baudrate", baudRate, false);
+        sensorConfiguration.baudRate = BaudRate(baudRate);
+
+        Get_Parameter_From_Parameter_Server("intensityData", sensorConfiguration.intensity, false);
+        
+        int scanningFrequency_Hz;
+        Get_Parameter_From_Parameter_Server("scanningFrequency_Hz", scanningFrequency_Hz, false);
+
+        if(!isValidScanningFrequency_HzValue(scanningFrequency_Hz))
+        {
+            throw std::runtime_error("Invalid Scanning Frequency specified.");
+        }
+
+        sensorConfiguration.scanningFrequency_Hz = static_cast<Driver::ScanningFrequency>(scanningFrequency_Hz);
+
+        Get_Parameter_From_Parameter_Server("dataSmoothing", sensorConfiguration.dataSmoothing, false);
+        Get_Parameter_From_Parameter_Server("dragPointRemoval", sensorConfiguration.dragPointRemoval, false);
+
+        return sensorConfiguration;
     }
-
-    driver.registerScanCallback(onPointsReceived);
-
-    driver.start();
-
-    ros::spin();
-
-    SEND_DEBUG_MESSAGE("Shutting down.");
-
-    driver.stop();
+}
 }
