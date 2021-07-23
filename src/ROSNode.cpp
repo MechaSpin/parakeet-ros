@@ -42,23 +42,47 @@ namespace parakeet
 
     void ROSNode::run()
     {
-        Driver::SensorConfiguration sensorConfiguration = readSensorConfigurationFromParameterServer();
+        Driver* driver;
 
-        Driver driver;
+        std::string sensorType;
+        Get_Parameter_From_Parameter_Server("sensorType", sensorType, false);
 
-        driver.connect(sensorConfiguration);
+        if(sensorType == "Pro")
+        {
+            Pro::Driver::SensorConfiguration sensorConfiguration = readSerialSensorConfigurationFromParameterServer();
 
-        driver.registerScanCallback(std::bind(&ROSNode::onPointsReceived, this, std::placeholders::_1));
+            Pro::Driver* proDriver = new Pro::Driver();
+            proDriver->connect(sensorConfiguration);
+
+            driver = proDriver;
+        }
+        else if(sensorType == "ProE")
+        {
+            ProE::Driver::SensorConfiguration sensorConfiguration = readEthernetSensorConfigurationFromParameterServer();
+
+            ProE::Driver* proEDriver = new ProE::Driver();
+            proEDriver->connect(sensorConfiguration);
+
+            driver = proEDriver;
+        }
+        else
+        {
+            throw std::runtime_error("Invalid value for \"sensorType\"");
+        }
+
+        driver->registerScanCallback(std::bind(&ROSNode::onPointsReceived, this, std::placeholders::_1));
 
         sendROSDebugMessage("Starting driver.");
-        driver.start();
+        driver->start();
 
         ros::Rate loop_rate(10);
         ros::spin();
 
         sendROSDebugMessage("Shutting driver down.");
 
-        driver.stop();
+        driver->stop();
+
+        delete driver;
     }
 
     void ROSNode::sendROSDebugMessage(const std::string& debugMessage)
@@ -135,12 +159,12 @@ namespace parakeet
         return false;
     }
 
-    Driver::SensorConfiguration ROSNode::readSensorConfigurationFromParameterServer()
+    Pro::Driver::SensorConfiguration ROSNode::readSerialSensorConfigurationFromParameterServer()
     {
         //Get params from paremeter server
-        // ex: rosrun parakeet_ros parakeet_ros_talker _port:="/dev/ttyUSB0" _baudrate:=500000 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false
+        // ex: rosrun parakeet_ros parakeet_ros_talker _sensor:="Pro" _port:="/dev/ttyUSB0" _baudrate:=500000 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false
 
-        Driver::SensorConfiguration sensorConfiguration;
+        Pro::Driver::SensorConfiguration sensorConfiguration;
 
         Get_Parameter_From_Parameter_Server("port", sensorConfiguration.comPort, false);
 
@@ -163,6 +187,34 @@ namespace parakeet
         Get_Parameter_From_Parameter_Server("dataSmoothing", sensorConfiguration.dataSmoothing, false);
         Get_Parameter_From_Parameter_Server("dragPointRemoval", sensorConfiguration.dragPointRemoval, false);
 
+        return sensorConfiguration;
+    }
+
+    ProE::Driver::SensorConfiguration ROSNode::readEthernetSensorConfigurationFromParameterServer()
+    {
+        //Get params from paremeter server
+        // ex: rosrun parakeet_ros parakeet_ros_talker _sensor:="ProE" _ipAddress:="192.168.158.98" _lidarPort:=6543 _localPort:=6668 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false _resampleFilter:=true
+        ProE::Driver::SensorConfiguration sensorConfiguration;
+
+        Get_Parameter_From_Parameter_Server("ipAddress", sensorConfiguration.ipAddress, false);
+        Get_Parameter_From_Parameter_Server("lidarPort", sensorConfiguration.lidarPort, false);
+        Get_Parameter_From_Parameter_Server("localPort", sensorConfiguration.localPort, false);
+
+        Get_Parameter_From_Parameter_Server("intensityData", sensorConfiguration.intensity, false);
+        
+        int scanningFrequency_Hz;
+        Get_Parameter_From_Parameter_Server("scanningFrequency_Hz", scanningFrequency_Hz, false);
+
+        if(!isValidScanningFrequency_HzValue(scanningFrequency_Hz))
+        {
+            throw std::runtime_error("Invalid Scanning Frequency specified.");
+        }
+
+        sensorConfiguration.scanningFrequency_Hz = static_cast<Driver::ScanningFrequency>(scanningFrequency_Hz);
+
+        Get_Parameter_From_Parameter_Server("dataSmoothing", sensorConfiguration.dataSmoothing, false);
+        Get_Parameter_From_Parameter_Server("dragPointRemoval", sensorConfiguration.dragPointRemoval, false);
+        Get_Parameter_From_Parameter_Server("resampleFilter", sensorConfiguration.resampleFilter, false);
         return sensorConfiguration;
     }
 }
