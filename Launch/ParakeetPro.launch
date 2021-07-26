@@ -1,4 +1,5 @@
 <launch>
+	<param name="sensorType" value="Pro" />
 	<param name="port" value="/dev/ttyUSB0" />
 	<param name="baudrate" value="0" />
 	<param name="intensityData" value="true" />
