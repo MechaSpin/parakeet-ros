@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.5)
-project(parakeet_ros VERSION 2.0.0)
+project(parakeet_ros VERSION 3.0.0)
 
 ## Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp std_msgs sensor_msgs)
