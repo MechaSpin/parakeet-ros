@@ -1,8 +1,8 @@
 <launch>
 	<param name="sensorType" value="ProE" />
 	<param name="ipAddress" value="192.168.158.98" />
-	<param name="lidarPort" value="6543" />
-	<param name="localPort" value="6668" />
+	<param name="dstPort" value="6543" />
+	<param name="srcPort" value="6668" />
 	<param name="intensityData" value="true" />
 	<param name="scanningFrequency_Hz" value="15" />
 	<param name="dataSmoothing" value="false" />

@@ -193,12 +193,12 @@ namespace parakeet
     ProE::Driver::SensorConfiguration ROSNode::readEthernetSensorConfigurationFromParameterServer()
     {
         //Get params from paremeter server
-        // ex: rosrun parakeet_ros parakeet_ros_talker _sensor:="ProE" _ipAddress:="192.168.158.98" _lidarPort:=6543 _localPort:=6668 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false _resampleFilter:=true
+        // ex: rosrun parakeet_ros parakeet_ros_talker _sensor:="ProE" _ipAddress:="192.168.158.98" _dstPort:=6543 _srcPort:=6668 _intensityData:=true _scanningFrequency_Hz:=10 _dataSmoothing:=false _dragPointRemoval:=false _resampleFilter:=true
         ProE::Driver::SensorConfiguration sensorConfiguration;
 
         Get_Parameter_From_Parameter_Server("ipAddress", sensorConfiguration.ipAddress, false);
-        Get_Parameter_From_Parameter_Server("lidarPort", sensorConfiguration.lidarPort, false);
-        Get_Parameter_From_Parameter_Server("localPort", sensorConfiguration.localPort, false);
+        Get_Parameter_From_Parameter_Server("dstPort", sensorConfiguration.dstPort, false);
+        Get_Parameter_From_Parameter_Server("srcPort", sensorConfiguration.srcPort, false);
 
         Get_Parameter_From_Parameter_Server("intensityData", sensorConfiguration.intensity, false);
         
