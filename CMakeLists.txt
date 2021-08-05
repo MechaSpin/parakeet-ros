@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.5)
-project(parakeet_ros VERSION 2.0.0)
+project(parakeet_ros VERSION 3.0.0)
 
 ## Find catkin and any catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp std_msgs sensor_msgs)
@@ -16,11 +16,9 @@ endif()
 ## Declare a catkin package
 catkin_package()
 
-## Include directories
-include_directories(include ${catkin_INCLUDE_DIRS})
-
 ## Build package
 add_executable(parakeet_ros_talker src/main.cpp src/ROSNode.cpp include/ROSNode.h)
+target_include_directories(parakeet_ros_talker PUBLIC include ${catkin_INCLUDE_DIRS})
 target_link_libraries(parakeet_ros_talker ${catkin_LIBRARIES} Parakeet::Parakeet)
 
 ## Install
