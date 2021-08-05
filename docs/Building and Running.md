@@ -26,13 +26,19 @@ source devel/setup.bash
 
 
 #### 5a. Running via roslaunch
-- A example roslaunch file has been created and can be found in {PARAKEET_ROS_ROOT}/Launch/Example.launch
+- A example roslaunch file has been created and can be found in {PARAKEET_ROS_ROOT}/Launch/
 
+Parakeet Pro
 ```
-roslaunch {PARAKEET_ROS_ROOT}/Launch/Example.launch
+roslaunch {PARAKEET_ROS_ROOT}/Launch/ParakeetPro.launch
 ```
 
-- Note: this launch file will launch the ROS node with the default runtime parameters, use the Example.launch to create a launch file more fitting to your needs. Information on each parameter can be found in [Runtime Parameters](Runtime%20Parameters.md)
+Parakeet ProE
+```
+roslaunch {PARAKEET_ROS_ROOT}/Launch/ParakeetProE.launch
+```
+
+- Note: this launch file will run the ROS node with the suggested runtime parameters, use the example launch files as a template to create one more fitting to your needs. Information on each parameter can be found in [Runtime Parameters](Runtime%20Parameters.md)
 
 #### 5a. Running via rosrun
 - Initialize the runtime parameters using rosparam (look at [Runtime Parameters](Runtime%20Parameters.md))
