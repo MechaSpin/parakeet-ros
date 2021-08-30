@@ -121,9 +121,11 @@ namespace parakeet
 
         float minAngle_rad = util::degreesToRadians(scanData.getPoints()[0].getAngle_deg());
         float maxAngle_rad = util::degreesToRadians(scanData.getPoints()[numberOfPointsReceived - 1].getAngle_deg());
+        
+        laserScanMessage.angle_increment = -(maxAngle_rad - minAngle_rad) / (numberOfPointsReceived - 1);
 
         laserScanMessage.angle_min = minAngle_rad;
-        laserScanMessage.angle_max = maxAngle_rad;
+        laserScanMessage.angle_max = laserScanMessage.angle_increment * (numberOfPointsReceived - 1);
         laserScanMessage.range_min = PARAKEET_SENSOR_MIN_RANGE_M;
         laserScanMessage.range_max = PARAKEET_SENSOR_MAX_RANGE_M;
 
@@ -133,7 +135,6 @@ namespace parakeet
             laserScanMessage.intensities.push_back(point.getIntensity());
         }
 
-        laserScanMessage.angle_increment = -(maxAngle_rad - minAngle_rad) / numberOfPointsReceived;
 
         rosNodePublisher.publish(laserScanMessage);
 
