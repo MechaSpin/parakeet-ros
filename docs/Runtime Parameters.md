@@ -96,3 +96,8 @@ The frame ID the laser scan should be published under
 ie: "myCustomFrameID"
 
 default value: "laser"
+
+#### extraLatencyDelay_ns - OPTIONAL
+The number of nanoseconds to add ontop of the existing expected timestamp of: 1 / scanningFrequency_Hz seconds
+
+default value: 0

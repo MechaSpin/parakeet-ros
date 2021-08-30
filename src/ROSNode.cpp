@@ -2,12 +2,12 @@
 	Copyright 2021 OpenJAUS, LLC (dba MechaSpin). Subject to the MIT license.
 */
 
-#include "ROSNode.h"
+#include <ROSNode.h>
 
 #include <algorithm>
 
-#include "std_msgs/String.h"
-#include "sensor_msgs/LaserScan.h"
+#include <std_msgs/String.h>
+#include <sensor_msgs/LaserScan.h>
 
 #define Get_Parameter_From_Parameter_Server(parameterName, outputValue, isOptional)                                 \
 if(!nodeHandle.getParam(parameterName, outputValue) && !isOptional)                                                 \
@@ -21,7 +21,7 @@ namespace parakeet
 {
     const uint32_t PARAKEET_SENSOR_MIN_RANGE_M = 0;
     const uint32_t PARAKEET_SENSOR_MAX_RANGE_M = 50;
-    const double NANOSECONDS_IN_SECOND = 1000000000;
+    const long NANOSECONDS_IN_SECOND = 1000000000;
 
     ROSNode::ROSNode() : nodeHandle("")
     {
@@ -34,7 +34,7 @@ namespace parakeet
 
         rosNodePublisher = nodeHandle.advertise<sensor_msgs::LaserScan>(laserScanTopic == ""?"scan":laserScanTopic, 1000);
 
-        timeReceivedLastPoints = std::chrono::system_clock::now().time_since_epoch();
+        timeReceivedLastPoints = std::chrono::system_clock::now();
         sequenceID = 0;
 
         sendROSDebugMessage("ROSNode initialized");
@@ -46,6 +46,8 @@ namespace parakeet
 
         std::string sensorType;
         Get_Parameter_From_Parameter_Server("sensorType", sensorType, false);
+
+        Get_Parameter_From_Parameter_Server("extraLatencyDelay_ns", extraLatencyDelay_ns, true);
 
         if(sensorType == "Pro")
         {
@@ -108,15 +110,13 @@ namespace parakeet
         laserScanMessage.header.frame_id = laserScanFrameID;
         laserScanMessage.header.seq = sequenceID++;
 
-        auto currentTimeSinceEpoch = scanData.getTimestamp().time_since_epoch();
+        std::chrono::nanoseconds expectedDelay(NANOSECONDS_IN_SECOND / scanningFrequency_Hz); 
+        auto timeReceivedPoints = std::chrono::system_clock::now() - (expectedDelay + std::chrono::nanoseconds(extraLatencyDelay_ns));
 
-        laserScanMessage.scan_time = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(currentTimeSinceEpoch - timeReceivedLastPoints).count() / NANOSECONDS_IN_SECOND;
+        laserScanMessage.scan_time = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(timeReceivedPoints.time_since_epoch() - timeReceivedLastPoints.time_since_epoch()).count() / NANOSECONDS_IN_SECOND;
         laserScanMessage.time_increment = laserScanMessage.scan_time / numberOfPointsReceived;
 
-        int currentTimeSinceEpochSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTimeSinceEpoch).count();
-        int currentTimeSinceEpochNanoseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTimeSinceEpoch).count() - (currentTimeSinceEpochSeconds * NANOSECONDS_IN_SECOND);
-        laserScanMessage.header.stamp = ros::Time(currentTimeSinceEpochSeconds, currentTimeSinceEpochNanoseconds);
-
+        laserScanMessage.header.stamp = ros::Time().fromNSec((std::uint64_t)std::chrono::duration_cast<std::chrono::nanoseconds>(timeReceivedPoints.time_since_epoch()).count());
         laserScanMessage.header.frame_id = laserScanFrameID;
 
         float minAngle_rad = util::degreesToRadians(scanData.getPoints()[0].getAngle_deg());
@@ -138,7 +138,7 @@ namespace parakeet
 
         rosNodePublisher.publish(laserScanMessage);
 
-        timeReceivedLastPoints = currentTimeSinceEpoch;
+        timeReceivedLastPoints = timeReceivedPoints;
     }
 
     bool ROSNode::isValidScanningFrequency_HzValue(int scanningFrequency_Hz)
@@ -175,7 +175,6 @@ namespace parakeet
 
         Get_Parameter_From_Parameter_Server("intensityData", sensorConfiguration.intensity, false);
         
-        int scanningFrequency_Hz;
         Get_Parameter_From_Parameter_Server("scanningFrequency_Hz", scanningFrequency_Hz, false);
 
         if(!isValidScanningFrequency_HzValue(scanningFrequency_Hz))
@@ -203,7 +202,6 @@ namespace parakeet
 
         Get_Parameter_From_Parameter_Server("intensityData", sensorConfiguration.intensity, false);
         
-        int scanningFrequency_Hz;
         Get_Parameter_From_Parameter_Server("scanningFrequency_Hz", scanningFrequency_Hz, false);
 
         if(!isValidScanningFrequency_HzValue(scanningFrequency_Hz))
