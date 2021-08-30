@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Modified
 - Bump to using parakeet-sdk v3.0.0
 - [BREAKING] Added required runtime parameter 'sensorType'
+- Added optional runtime parameter 'extraLatencyDelay_ns'
 
 ## [2.0.0] - 2021-07-12
 ### Added

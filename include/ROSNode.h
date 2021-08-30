@@ -8,7 +8,10 @@
 #include <parakeet/Pro/Driver.h>
 #include <parakeet/ProE/Driver.h>
 #include <parakeet/util.h>
-#include "ros/ros.h"
+
+#include <ros/ros.h>
+
+#include <chrono>
 
 namespace mechaspin
 {
@@ -33,8 +36,11 @@ private:
     ros::Publisher debugMessagePublisher;
     uint32_t sequenceID;
     std::string laserScanFrameID;
-    std::chrono::system_clock::duration timeReceivedLastPoints;
+    std::chrono::system_clock::time_point timeReceivedLastPoints;
     ros::NodeHandle nodeHandle;
+
+    int extraLatencyDelay_ns = 0;
+    int scanningFrequency_Hz;
 };
 }
 }
