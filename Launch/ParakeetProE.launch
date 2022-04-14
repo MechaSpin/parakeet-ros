@@ -8,6 +8,7 @@
 	<param name="dataSmoothing" value="false" />
 	<param name="dragPointRemoval" value="false" />
 	<param name="resampleFilter" value="true" />
+	<param name="extraLatencyDelay_ns" value="0" />
 
 	<!-- Optional, default is "scan" -->
 	<param name="laserScanTopic" value="scan" />
