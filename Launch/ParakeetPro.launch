@@ -1,10 +1,12 @@
 <launch>
+	<param name="sensorType" value="Pro" />
 	<param name="port" value="/dev/ttyUSB0" />
 	<param name="baudrate" value="0" />
 	<param name="intensityData" value="true" />
 	<param name="scanningFrequency_Hz" value="10" />
 	<param name="dataSmoothing" value="false" />
 	<param name="dragPointRemoval" value="false" />
+	<param name="extraLatencyDelay_ns" value="0" />
 
 	<!-- Optional, default is "scan" -->
 	<param name="laserScanTopic" value="scan" />

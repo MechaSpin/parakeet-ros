@@ -25,22 +25,42 @@ rosparam set port "/dev/ttyUSB0"
 ```
 
 After setting the parameters, you can execute the ROS node via:
-
-
-	rosrun parakeet_ros parakeet_ros_talker
+```
+rosrun parakeet_ros parakeet_ros_talker
+```
 
 #  All parameters
+#### sensorType
+Which Parakeet sensor is being used
+
+accepted inputs: { "Pro", "ProE" }
+
 #### port
-The location of the serial port
+The location of the serial port, for use with only the Parakeet Pro
 
 ie: "/dev/ttyUSB0"
 
 #### baudrate
-The baudrate the sensor is currently set to
+The baudrate the sensor is currently set to, for use with only the Parakeet Pro
 
 ie: 500000
 
 A baudrate value of 0 will result in the Driver attempting to find the correct baud rate.
+
+#### ipAddress
+The IP Address of the sensor, for use with only the Parakeet ProE
+
+ie: "192.168.158.98"
+
+#### dstPort
+The port of the sensor which messages will be sent to, for use with only the Parakeet ProE
+
+default value: 6543
+
+#### srcPort
+The port of the sensor which messages will be received from, for use with only the Parakeet ProE
+
+default value: 6668
 
 #### intensityData 
 Whether the sensor should return intensity data with each point
@@ -50,7 +70,8 @@ accepted inputs: { true, false }
 #### scanningFrequency_Hz 
 The speed at which the sensor should spin at
 
-accepted inputs: { 7, 10, 15 }
+Parakeet Pro accepted inputs: { 7, 10, 15 }
+Parakeet ProE accepted inputs: { 10, 15 }
 
 #### dataSmoothing 
 Whether the sensor should apply the data smoothing algorithm before returing points
@@ -75,3 +96,8 @@ The frame ID the laser scan should be published under
 ie: "myCustomFrameID"
 
 default value: "laser"
+
+#### extraLatencyDelay_ns - OPTIONAL
+The number of nanoseconds to add ontop of the existing expected timestamp of: 1 / scanningFrequency_Hz seconds
+
+default value: 0

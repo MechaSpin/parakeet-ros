@@ -5,9 +5,13 @@
 #ifndef PARAKEET_ROS_ROSNODE_H
 #define PARAKEET_ROS_ROSNODE_H
 
-#include <parakeet/Driver.h>
+#include <parakeet/Pro/Driver.h>
+#include <parakeet/ProE/Driver.h>
 #include <parakeet/util.h>
-#include "ros/ros.h"
+
+#include <ros/ros.h>
+
+#include <chrono>
 
 namespace mechaspin
 {
@@ -22,7 +26,8 @@ public:
 private:
     void sendROSDebugMessage(const std::string& debugMessage);
 
-    Driver::SensorConfiguration readSensorConfigurationFromParameterServer();
+    Pro::Driver::SensorConfiguration readSerialSensorConfigurationFromParameterServer();
+    ProE::Driver::SensorConfiguration readEthernetSensorConfigurationFromParameterServer();
     bool isValidScanningFrequency_HzValue(int scanningFrequency_Hz);
 
     void onPointsReceived(const mechaspin::parakeet::ScanDataPolar& scanData);
@@ -31,8 +36,11 @@ private:
     ros::Publisher debugMessagePublisher;
     uint32_t sequenceID;
     std::string laserScanFrameID;
-    std::chrono::system_clock::duration timeReceivedLastPoints;
+    std::chrono::system_clock::time_point timeReceivedLastPoints;
     ros::NodeHandle nodeHandle;
+
+    int extraLatencyDelay_ns = 0;
+    int scanningFrequency_Hz;
 };
 }
 }
